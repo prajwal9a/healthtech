@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RuralHealthGuard | Dynamic Disease Monitoring</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #10b981;
+            --accent: #3b82f6;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --doctor-color: #3b82f6;
+            --pharmacist-color: #10b981;
+            --citizen-color: #f59e0b;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: #374151;
+            overflow-x: hidden;
+            background-color: #f8fafc;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 250px;
+            background: var(--dark);
+            color: white;
+            transition: all 0.3s ease;
+            z-index: 999;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar {
+            padding: 15px 0;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-card {
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            border: none;
+            overflow: hidden;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-type-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .doctor-indicator {
+            background-color: var(--doctor-color);
+            color: white;
+        }
+        
+        .risk-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .risk-low {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .risk-medium {
+            background-color: #fef9c3;
+            color: #ca8a04;
+        }
+        
+        .risk-high {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-item {
+            margin-bottom: 5px;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        .floating-agent {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 100;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 20px rgba(37, 99, 235, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .floating-agent:hover {
+            transform: scale(1.1);
+        }
+        
+        .health-modal {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 350px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            z-index: 101;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        
+        .health-modal.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .chat-message {
+            padding: 12px 16px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chat-message.ai {
+            background: #f1f5f9;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .chat-message.user {
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 5px;
+            margin-left: auto;
+        }
+        
+        .section-title {
+            position: relative;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .section-title:after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 80px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        
+        .live-data-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 12px;
+            height: 12px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        .data-card {
+            transition: all 0.3s ease;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .data-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .map-container {
+            height: 400px;
+            background: #f1f5f9;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .map-point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .map-point:hover {
+            transform: translate(-50%, -50%) scale(1.5);
+            z-index: 10;
+        }
+        
+        .case-low {
+            background-color: #10b981;
+        }
+        
+        .case-medium {
+            background-color: #f59e0b;
+        }
+        
+        .case-high {
+            background-color: #ef4444;
+        }
+        
+        .notification-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 12px;
+            height: 12px;
+            background-color: #ef4444;
+            border-radius: 50%;
+        }
+        
+        .refresh-btn {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            transform: rotate(180deg);
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="p-4 text-center border-bottom border-secondary">
+            <i class="fas fa-house-medical text-primary fs-2 mb-2"></i>
+            <h4 class="mb-0">Rural<span class="text-primary">HealthGuard</span></h4>
+            <small class="text-muted">Disease Surveillance Platform</small>
+        </div>
+        
+        <div class="p-3">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" data-user="doctor">
+                        <i class="fas fa-user-md"></i> Doctor Portal
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-user="pharmacist">
+                        <i class="fas fa-pills"></i> Pharmacist Portal
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-user="citizen">
+                        <i class="fas fa-user"></i> Citizen Portal
+                    </a>
+                </li>
+                <li class="nav-item mt-3">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-home"></i> Back to Main Site
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="position-absolute bottom-0 w-100 p-3 border-top border-secondary">
+            <div class="text-center text-muted small">
+                <p class="mb-0">© 2023 RuralHealthGuard</p>
+                <p class="mb-0">v2.0.0</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+            <div class="container-fluid">
+                <button class="btn btn-sm btn-light" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <div class="d-flex align-items-center">
+                    <div class="dropdown me-3">
+                        <button class="btn btn-light btn-sm dropdown-toggle position-relative" type="button" id="notificationsDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-count">
+                                3
+                            </span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
+                            <h6 class="dropdown-header">Notifications</h6>
+                            <div id="notification-list">
+                                <a class="dropdown-item" href="#">
+                                    <div class="text-primary">New outbreak alert in your area</div>
+                                    <small class="text-muted">10 minutes ago</small>
+                                </a>
+                                <a class="dropdown-item" href="#">
+                                    <div class="text-primary">5 new symptom reports received</div>
+                                    <small class="text-muted">1 hour ago</small>
+                                </a>
+                                <a class="dropdown-item" href="#">
+                                    <div class="text-primary">Weekly health report is ready</div>
+                                    <small class="text-muted">2 hours ago</small>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-light rounded-pill dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                            <img src="https://ui-avatars.com/api/?name=Doctor+User&background=3b82f6&color=fff" class="rounded-circle me-2" width="32" height="32">
+                            <span>Dr. Sharma</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a>
+                            <a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- User Type Indicator -->
+        <div class="user-type-indicator doctor-indicator">
+            <i class="fas fa-user-md me-1"></i> Doctor View
+        </div>
+
+        <!-- Dashboard Content -->
+        <div class="container-fluid p-4">
+            <!-- Dashboard Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="h3 fw-bold">Doctor Dashboard</h2>
+                            <p class="text-muted">Monitor disease patterns and patient reports in your area</p>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="me-2 text-muted small" id="last-updated">Last updated: Just now</span>
+                            <i class="fas fa-sync-alt refresh-btn text-muted" id="refresh-data"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="row mb-4" id="stats-cards">
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card bg-white p-4 shadow-sm doctor-theme position-relative">
+                        <div class="live-data-badge"></div>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
+                                <i class="fas fa-virus text-primary fs-4"></i>
+                            </div>
+                            <div>
+                                <h3 class="fw-bold mb-0" id="active-cases">24</h3>
+                                <p class="text-muted mb-0">Active Cases</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card bg-white p-4 shadow-sm doctor-theme">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success bg-opacity-10 rounded-circle p-3 me-3">
+                                <i class="fas fa-tint text-success fs-4"></i>
+                            </div>
+                            <div>
+                                <h3 class="fw-bold mb-0" id="water-alerts">3</h3>
+                                <p class="text-muted mb-0">Water Alerts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card bg-white p-4 shadow-sm doctor-theme">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-warning bg-opacity-10 rounded-circle p-3 me-3">
+                                <i class="fas fa-exclamation-triangle text-warning fs-4"></i>
+                            </div>
+                            <div>
+                                <h3 class="fw-bold mb-0" id="new-reports">8</h3>
+                                <p class="text-muted mb-0">New Reports</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card bg-white p-4 shadow-sm doctor-theme">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-info bg-opacity-10 rounded-circle p-3 me-3">
+                                <i class="fas fa-map-marker-alt text-info fs-4"></i>
+                            </div>
+                            <div>
+                                <h3 class="fw-bold mb-0" id="risk-areas">5</h3>
+                                <p class="text-muted mb-0">High Risk Areas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts and Map -->
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <div class="data-card card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold mb-0">Disease Trends</h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary active" data-period="week">Week</button>
+                                <button type="button" class="btn btn-outline-primary" data-period="month">Month</button>
+                                <button type="button" class="btn btn-outline-primary" data-period="quarter">Quarter</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="diseaseTrendChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="data-card card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="fw-bold mb-0">Disease Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="diseaseDistributionChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Map and Patient Reports -->
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="data-card card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="fw-bold mb-0">Disease Outbreak Map</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="map-container" id="outbreak-map">
+                                <!-- Map points will be dynamically added here -->
+                            </div>
+                            
+                            <div class="mt-4">
+                                <h6 class="fw-bold">Recent Case Clusters</h6>
+                                <div class="alert alert-warning alert-custom">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>Cholera Cluster</strong> detected in Eastern Sector
+                                        </div>
+                                        <span class="risk-badge risk-high">High Risk</span>
+                                    </div>
+                                    <p class="mb-0 mt-2">12 cases reported in the last 48 hours. Water source contamination suspected.</p>
+                                </div>
+                                
+                                <div class="alert alert-info alert-custom">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>Diarrhea Increase</strong> in Western Sector
+                                        </div>
+                                        <span class="risk-badge risk-medium">Medium Risk</span>
+                                    </div>
+                                    <p class="mb-0 mt-2">18 cases reported this week, 25% increase from previous week.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="data-card card border-0 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold mb-0">Patient Reports</h5>
+                            <button class="btn btn-sm btn-outline-primary" id="refresh-reports">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="patient-reports">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient</th>
+                                            <th>Symptoms</th>
+                                            <th>Location</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Patient data will be dynamically added here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="data-card card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="fw-bold mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-primary w-100 action-btn mb-3">
+                                <i class="fas fa-plus-circle me-2"></i> New Diagnosis
+                            </button>
+                            <button class="btn btn-outline-primary w-100 action-btn mb-3">
+                                <i class="fas fa-file-medical me-2"></i> Generate Health Report
+                            </button>
+                            <button class="btn btn-outline-primary w-100 action-btn mb-3">
+                                <i class="fas fa-bell me-2"></i> Send Alert to Community
+                            </button>
+                            <button class="btn btn-outline-primary w-100 action-btn">
+                                <i class="fas fa-water me-2"></i> Request Water Test
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="data-card card border-0 shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="fw-bold mb-0">Health Resources</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-book text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold">Cholera Treatment Guidelines</h6>
+                                    <p class="text-muted small">Latest WHO protocols for cholera management</p>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-file-pdf text-success"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold">Outbreak Response Plan</h6>
+                                    <p class="text-muted small">Step-by-step guide for disease outbreak management</p>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-start">
+                                <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-phone-alt text-warning"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold">Emergency Contacts</h6>
+                                    <p class="text-muted small">District health officials and emergency numbers</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Health Agent -->
+    <div class="floating-agent" id="floating-agent">
+        <i class="fas fa-robot fs-4"></i>
+    </div>
+
+    <!-- Health Agent Modal -->
+    <div class="health-modal" id="health-agent-modal">
+        <div class="card border-0 rounded-3">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3 rounded-top">
+                <h5 class="mb-0"><i class="fas fa-robot me-2"></i> Health Assistant</h5>
+                <button type="button" class="btn-close btn-close-white" id="close-agent-modal"></button>
+            </div>
+            <div class="card-body p-0">
+                <div class="chat-container p-3" style="max-height: 300px; overflow-y: auto;" id="chat-messages">
+                    <div class="chat-message ai">
+                        <p class="mb-0">Hello! I'm your Community Health Assistant. How can I help you today?</p>
+                    </div>
+                </div>
+                <div class="input-group p-3 border-top">
+                    <input type="text" class="form-control" id="chat-input" placeholder="Type your message...">
+                    <button class="btn btn-primary" id="send-message"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap & jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Sample data for dynamic content
+        const diseaseData = {
+            trends: {
+                week: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    cholera: [12, 19, 15, 17, 14, 13, 16],
+                    diarrhea: [30, 35, 32, 38, 36, 40, 42],
+                    typhoid: [8, 10, 9, 11, 12, 10, 13]
+                },
+                month: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    cholera: [45, 52, 48, 55],
+                    diarrhea: [120, 135, 142, 150],
+                    typhoid: [32, 38, 35, 40]
+                },
+                quarter: {
+                    labels: ['Month 1', 'Month 2', 'Month 3'],
+                    cholera: [150, 165, 180],
+                    diarrhea: [450, 480, 520],
+                    typhoid: [110, 125, 135]
+                }
+            },
+            distribution: {
+                labels: ['Cholera', 'Diarrhea', 'Typhoid', 'Dysentery', 'Other'],
+                data: [15, 45, 20, 12, 8],
+                colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+            },
+            patients: [
+                { name: 'Rahul Kumar', symptoms: 'Fever, Diarrhea', location: 'Village East', status: 'pending' },
+                { name: 'Sunita Patel', symptoms: 'Vomiting, Dehydration', location: 'Village Center', status: 'treated' },
+                { name: 'Amir Khan', symptoms: 'Stomach pain, Fever', location: 'Village West', status: 'urgent' },
+                { name: 'Laxmi Devi', symptoms: 'Diarrhea, Weakness', location: 'Village North', status: 'pending' },
+                { name: 'Rajesh Kumar', symptoms: 'Fever, Headache', location: 'Village South', status: 'pending' }
+            ],
+            mapPoints: [
+                { x: 30, y: 40, cases: 12, severity: 'high', disease: 'Cholera' },
+                { x: 70, y: 30, cases: 8, severity: 'medium', disease: 'Diarrhea' },
+                { x: 50, y: 70, cases: 5, severity: 'low', disease: 'Typhoid' },
+                { x: 20, y: 60, cases: 15, severity: 'high', disease: 'Cholera' },
+                { x: 80, y: 80, cases: 7, severity: 'medium', disease: 'Dysentery' }
+            ]
+        };
+
+        // Initialize charts
+        let trendChart, distributionChart;
+
+        $(document).ready(function() {
+            // Initialize the dashboard
+            initDashboard();
+            
+            // Set up event listeners
+            $('#sidebar-toggle').click(function() {
+                $('.sidebar').toggleClass('active');
+                $('.main-content').toggleClass('active');
+            });
+            
+            $('#refresh-data').click(function() {
+                refreshData();
+            });
+            
+            $('#refresh-reports').click(function() {
+                refreshPatientReports();
+            });
+            
+            $('.nav-link[data-user]').click(function(e) {
+                e.preventDefault();
+                switchUser($(this).data('user'));
+            });
+            
+            $('#floating-agent').click(function() {
+                $('#health-agent-modal').toggleClass('open');
+            });
+            
+            $('#close-agent-modal').click(function() {
+                $('#health-agent-modal').removeClass('open');
+            });
+            
+            $('#send-message').click(function() {
+                sendChatMessage();
+            });
+            
+            $('#chat-input').keypress(function(e) {
+                if(e.which == 13) {
+                    sendChatMessage();
+                }
+            });
+            
+            $('[data-period]').click(function() {
+                $('[data-period]').removeClass('active');
+                $(this).addClass('active');
+                updateTrendChart($(this).data('period'));
+            });
+            
+            // Simulate live data updates
+            setInterval(function() {
+                updateLiveData();
+            }, 5000);
+            
+            // Simulate new notifications
+            setInterval(function() {
+                addNewNotification();
+            }, 15000);
+        });
+
+        function initDashboard() {
+            // Initialize charts
+            initCharts();
+            
+            // Initialize map
+            initMap();
+            
+            // Load patient data
+            loadPatientReports();
+            
+            // Set initial time
+            updateLastUpdated();
+        }
+
+        function initCharts() {
+            // Disease trend chart
+            const trendCtx = document.getElementById('diseaseTrendChart').getContext('2d');
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: diseaseData.trends.week.labels,
+                    datasets: [
+                        {
+                            label: 'Cholera',
+                            data: diseaseData.trends.week.cholera,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Diarrhea',
+                            data: diseaseData.trends.week.diarrhea,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Typhoid',
+                            data: diseaseData.trends.week.typhoid,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Cases'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Disease distribution chart
+            const distributionCtx = document.getElementById('diseaseDistributionChart').getContext('2d');
+            distributionChart = new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: diseaseData.distribution.labels,
+                    datasets: [{
+                        data: diseaseData.distribution.data,
+                        backgroundColor: diseaseData.distribution.colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+
+        function initMap() {
+            const map = $('#outbreak-map');
+            map.empty();
+            
+            diseaseData.mapPoints.forEach(point => {
+                const mapPoint = $('<div class="map-point"></div>')
+                    .addClass('case-' + point.severity)
+                    .css({
+                        left: point.x + '%',
+                        top: point.y + '%'
+                    })
+                    .attr('title', point.cases + ' ' + point.disease + ' cases');
+                
+                map.append(mapPoint);
+            });
+        }
+
+        function loadPatientReports() {
+            const tableBody = $('#patient-reports tbody');
+            tableBody.empty();
+            
+            diseaseData.patients.forEach(patient => {
+                const statusClass = patient.status === 'treated' ? 'bg-success' : 
+                                  patient.status === 'urgent' ? 'bg-danger' : 'bg-warning';
+                const statusText = patient.status === 'treated' ? 'Treated' : 
+                                 patient.status === 'urgent' ? 'Urgent' : 'Pending';
+                
+                const row = $('<tr></tr>');
+                row.append('<td>' + patient.name + '</td>');
+                row.append('<td>' + patient.symptoms + '</td>');
+                row.append('<td>' + patient.location + '</td>');
+                row.append('<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>');
+                row.append('<td><button class="btn btn-sm btn-primary">Review</button></td>');
+                
+                tableBody.append(row);
+            });
+        }
+
+        function refreshData() {
+            // Show loading animation on refresh button
+            const refreshBtn = $('#refresh-data');
+            refreshBtn.addClass('fa-spin');
+            
+            // Simulate data fetching delay
+            setTimeout(function() {
+                // Update data with random variations
+                diseaseData.trends.week.cholera = diseaseData.trends.week.cholera.map(value => 
+                    Math.max(5, value + Math.floor(Math.random() * 5) - 2));
+                
+                diseaseData.trends.week.diarrhea = diseaseData.trends.week.diarrhea.map(value => 
+                    Math.max(20, value + Math.floor(Math.random() * 10) - 5));
+                
+                diseaseData.trends.week.typhoid = diseaseData.trends.week.typhoid.map(value => 
+                    Math.max(5, value + Math.floor(Math.random() * 3) - 1));
+                
+                // Update charts
+                trendChart.update();
+                distributionChart.update();
+                
+                // Update stats with random variations
+                $('#active-cases').text(Math.floor(20 + Math.random() * 10));
+                $('#water-alerts').text(Math.floor(2 + Math.random() * 3));
+                $('#new-reports').text(Math.floor(5 + Math.random() * 5));
+                $('#risk-areas').text(Math.floor(4 + Math.random() * 3));
+                
+                // Update last updated time
+                updateLastUpdated();
+                
+                // Remove loading animation
+                refreshBtn.removeClass('fa-spin');
+                
+                // Show success feedback
+                showToast('Data refreshed successfully', 'success');
+            }, 1000);
+        }
+
+        function refreshPatientReports() {
+            const refreshBtn = $('#refresh-reports');
+            refreshBtn.find('i').addClass('fa-spin');
+            
+            setTimeout(function() {
+                // Simulate new patient reports
+                if (Math.random() > 0.5) {
+                    const newPatients = [
+                        { name: 'Priya Singh', symptoms: 'Fever, Cough', location: 'Village South', status: 'pending' },
+                        { name: 'Vikram Patel', symptoms: 'Headache, Fatigue', location: 'Village East', status: 'pending' }
+                    ];
+                    
+                    diseaseData.patients = [...newPatients, ...diseaseData.patients.slice(0, 3)];
+                    loadPatientReports();
+                    
+                    showToast('New reports loaded', 'success');
+                } else {
+                    showToast('No new reports', 'info');
+                }
+                
+                refreshBtn.find('i').removeClass('fa-spin');
+            }, 800);
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            $('#last-updated').text('Last updated: ' + timeString);
+        }
+
+        function updateLiveData() {
+            // Randomly update one of the stats cards
+            const stats = ['active-cases', 'water-alerts', 'new-reports', 'risk-areas'];
+            const randomStat = stats[Math.floor(Math.random() * stats.length)];
+            const currentValue = parseInt($('#' + randomStat).text());
+            const newValue = Math.max(1, currentValue + Math.floor(Math.random() * 3) - 1);
+            
+            $('#' + randomStat).text(newValue);
+            
+            // Flash the updated stat
+            const statCard = $('#' + randomStat).closest('.stats-card');
+            statCard.addClass('bg-light');
+            setTimeout(() => {
+                statCard.removeClass('bg-light');
+            }, 500);
+        }
+
+        function addNewNotification() {
+            if (Math.random() > 0.3) {
+                const notifications = [
+                    { message: 'New symptom report from Village North', time: 'Just now' },
+                    { message: 'Water test results available for Well #3', time: '2 minutes ago' },
+                    { message: 'Reminder: Health worker meeting tomorrow', time: '5 minutes ago' }
+                ];
+                
+                const notification = notifications[Math.floor(Math.random() * notifications.length)];
+                const notificationList = $('#notification-list');
+                
+                // Add new notification at the top
+                notificationList.prepend(
+                    '<a class="dropdown-item" href="#">' +
+                    '<div class="text-primary">' + notification.message + '</div>' +
+                    '<small class="text-muted">' + notification.time + '</small>' +
+                    '</a>'
+                );
+                
+                // Update notification count
+                const currentCount = parseInt($('#notification-count').text());
+                $('#notification-count').text(currentCount + 1);
+                
+                // Show notification dot
+                $('#notificationsDropdown').addClass('position-relative');
+                if (!$('#notificationsDropdown .notification-dot').length) {
+                    $('#notificationsDropdown').append('<span class="notification-dot"></span>');
+                }
+            }
+        }
+
+        function switchUser(userType) {
+            $('.nav-link[data-user]').removeClass('active');
+            $(`.nav-link[data-user="${userType}"]`).addClass('active');
+            
+            $('.user-type-indicator')
+                .removeClass('doctor-indicator pharmacist-indicator citizen-indicator')
+                .addClass(userType + '-indicator')
+                .html(`<i class="fas fa-${getUserIcon(userType)} me-1"></i> ${getUserLabel(userType)} View`);
+                
+            updateUserDropdown(userType);
+            
+            showToast(`Switched to ${getUserLabel(userType)} view`, 'info');
+        }
+
+        function getUserIcon(userType) {
+            switch(userType) {
+                case "doctor": return "user-md";
+                case "pharmacist": return "pills";
+                case "citizen": return "user";
+                default: return "user";
+            }
+        }
+
+        function getUserLabel(userType) {
+            switch(userType) {
+                case "doctor": return "Doctor";
+                case "pharmacist": return "Pharmacist";
+                case "citizen": return "Citizen";
+                default: return "User";
+            }
+        }
+
+        function updateUserDropdown(userType) {
+            const dropdown = $("#userDropdown");
+            
+            switch(userType) {
+                case "doctor":
+                    dropdown.html('<img src="https://ui-avatars.com/api/?name=Doctor+User&background=3b82f6&color=fff" class="rounded-circle me-2" width="32" height="32"><span>Dr. Sharma</span>');
+                    break;
+                case "pharmacist":
+                    dropdown.html('<img src="https://ui-avatars.com/api/?name=Pharmacist+User&background=10b981&color=fff" class="rounded-circle me-2" width="32" height="32"><span>Mr. Patel</span>');
+                    break;
+                case "citizen":
+                    dropdown.html('<img src="https://ui-avatars.com/api/?name=Citizen+User&background=f59e0b&color=fff" class="rounded-circle me-2" width="32" height="32"><span>Rahul Kumar</span>');
+                    break;
+            }
+        }
+
+        function sendChatMessage() {
+            const input = $('#chat-input');
+            const message = input.val().trim();
+            
+            if (message) {
+                // Add user message
+                $('#chat-messages').append(
+                    '<div class="chat-message user">' +
+                    '<p class="mb-0">' + message + '</p>' +
+                    '</div>'
+                );
+                
+                // Clear input
+                input.val('');
+                
+                // Scroll to bottom
+                const chatContainer = $('.chat-container');
+                chatContainer.scrollTop(chatContainer[0].scrollHeight);
+                
+                // Simulate AI response
+                setTimeout(function() {
+                    let response;
+                    
+                    if (message.toLowerCase().includes('report')) {
+                        response = 'To report symptoms, go to the Patient Reports section and click "New Diagnosis".';
+                    } else if (message.toLowerCase().includes('cholera')) {
+                        response = 'Cholera is a water-borne disease. Current risk level in your area is moderate.';
+                    } else if (message.toLowerCase().includes('water')) {
+                        response = '3 water sources in your area have contamination alerts. Avoid using well #3 and public tap #2.';
+                    } else {
+                        response = 'I can help you with disease information, reporting symptoms, and understanding health alerts. What do you need help with?';
+                    }
+                    
+                    $('#chat-messages').append(
+                        '<div class="chat-message ai">' +
+                        '<p class="mb-0">' + response + '</p>' +
+                        '</div>'
+                    );
+                    
+                    chatContainer.scrollTop(chatContainer[0].scrollHeight);
+                }, 1000);
+            }
+        }
+
+        function updateTrendChart(period) {
+            trendChart.data.labels = diseaseData.trends[period].labels;
+            trendChart.data.datasets[0].data = diseaseData.trends[period].cholera;
+            trendChart.data.datasets[1].data = diseaseData.trends[period].diarrhea;
+            trendChart.data.datasets[2].data = diseaseData.trends[period].typhoid;
+            trendChart.update();
+        }
+
+        function showToast(message, type) {
+            // Create toast element
+            const toast = $(
+                '<div class="toast align-items-center text-white bg-' + type + ' border-0" role="alert" aria-live="assertive" aria-atomic="true">' +
+                '<div class="d-flex">' +
+                '<div class="toast-body">' + message + '</div>' +
+                '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+                '</div>' +
+                '</div>'
+            );
+            
+            // Add to container
+            $('#toast-container').append(toast);
+            
+            // Initialize and show toast
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            // Remove after hide
+            toast.on('hidden.bs.toast', function() {
+                toast.remove();
+            });
+        }
+
+        // Create toast container if it doesn't exist
+        if (!$('#toast-container').length) {
+            $('body').append('<div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3"></div>');
+        }
+    </script>
+</body>
+</html>
