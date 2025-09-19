@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India Community Health Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --secondary: #34a853;
+            --accent: #f25c54;
+            --light: #f8f9fa;
+            --dark: #202124;
+            --gov-blue: #3e4b66;
+            --gov-orange: #ff671f;
+            --gov-green: #046a38;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f7ff;
+            color: #333;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--gov-blue) 0%, var(--primary) 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dashboard-card {
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+            background: white;
+            height: 100%;
+            border-top: 4px solid var(--gov-orange);
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-title {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .icon-container {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            background: rgba(26, 115, 232, 0.1);
+            color: var(--primary);
+        }
+        
+        .health-tips {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid var(--gov-green);
+        }
+        
+        .resource-link {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: white;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--dark);
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+            border-left: 3px solid var(--gov-blue);
+        }
+        
+        .resource-link:hover {
+            background: #e8f0fe;
+            transform: translateX(5px);
+            color: var(--primary);
+        }
+        
+        .section-title {
+            position: relative;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        
+        footer {
+            background: var(--gov-blue);
+            color: white;
+            padding: 30px 0;
+            margin-top: 40px;
+        }
+        
+        .gov-banner {
+            background: linear-gradient(135deg, var(--gov-blue) 0%, var(--gov-green) 100%);
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .official-badge {
+            background: var(--gov-orange);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        
+        .scheme-card {
+            border-left: 4px solid var(--gov-green);
+        }
+        
+        .alert-card {
+            border-left: 4px solid var(--accent);
+        }
+        
+        .data-source {
+            font-size: 0.75rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .stat-number {
+                font-size: 1.8rem;
+            }
+            
+            .icon-container {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Government Banner -->
+    <div class="gov-banner">
+        <div class="container">
+            <i class="fas fa-check-circle me-2"></i> Official data from Ministry of Health and Family Welfare, Government of India
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="fas fa-heartbeat me-2"></i>
+                <span>India Health Dashboard</span>
+                <span class="official-badge">GOV.IN</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-info-circle me-1"></i> About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-download me-1"></i> Download Apps</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Dashboard Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2 class="fw-bold">Community Health Dashboard</h2>
+                <p class="text-muted">Real-time health data and resources from Government of India sources</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="d-inline-block border rounded-pill px-3 py-1 bg-white">
+                    <i class="fas fa-map-marker-alt text-primary me-1"></i>
+                    <select class="border-0 text-muted" id="stateSelector" style="outline: none;">
+                        <option value="national">National Data</option>
+                        <option value="MH">Maharashtra</option>
+                        <option value="UP">Uttar Pradesh</option>
+                        <option value="KL">Kerala</option>
+                        <option value="DL">Delhi</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="dashboard-card p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-title">VACCINATION DOSES</div>
+                            <div class="stat-number" id="vaccinationCount">2.18B</div>
+                            <div class="text-success small mt-1"><i class="fas fa-arrow-up"></i> <span id="vaccinationGrowth">12.5%</span> this month</div>
+                            <div class="data-source mt-1">Source: CoWIN Portal</div>
+                        </div>
+                        <div class="icon-container">
+                            <i class="fas fa-syringe"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-title">HEALTH CENTERS</div>
+                            <div class="stat-number" id="healthCenters">157K</div>
+                            <div class="text-success small mt-1"><i class="fas fa-plus-circle"></i> <span id="newCenters">1,240</span> new centers</div>
+                            <div class="data-source mt-1">Source: Ayushman Bharat</div>
+                        </div>
+                        <div class="icon-container">
+                            <i class="fas fa-hospital"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-title">COVID CASES</div>
+                            <div class="stat-number" id="covidCases">24.8K</div>
+                            <div class="text-danger small mt-1"><i class="fas fa-arrow-up"></i> <span id="covidGrowth">2.1%</span> this week</div>
+                            <div class="data-source mt-1">Source: MoHFW</div>
+                        </div>
+                        <div class="icon-container">
+                            <i class="fas fa-virus"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-title">HEALTH WORKERS</div>
+                            <div class="stat-number" id="healthWorkers">1.2M</div>
+                            <div class="text-success small mt-1"><i class="fas fa-user-plus"></i> <span id="trainedWorkers">15,000</span> trained</div>
+                            <div class="data-source mt-1">Source: NHM</div>
+                        </div>
+                        <div class="icon-container">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Government Alerts -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="dashboard-card alert-card p-4">
+                    <div class="d-flex">
+                        <div class="me-3 text-danger">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-1">Government Alert</h4>
+                            <p class="mb-0" id="governmentAlert">Heatwave alert issued for North India. Stay hydrated and avoid direct sun exposure during peak hours. <a href="#">Read more</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Maps -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-8">
+                <div class="dashboard-card p-4">
+                    <h4 class="section-title">Vaccination Progress</h4>
+                    <canvas id="vaccinationChart" height="250"></canvas>
+                    <div class="text-end mt-2">
+                        <small class="data-source">Data Source: CoWIN Dashboard, Ministry of Health</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dashboard-card p-4">
+                    <h4 class="section-title">Disease Distribution</h4>
+                    <canvas id="diseaseChart" height="250"></canvas>
+                    <div class="text-end mt-2">
+                        <small class="data-source">Data Source: Integrated Disease Surveillance Programme</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Government Schemes -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="dashboard-card scheme-card p-4">
+                    <h4 class="section-title">Government Health Schemes</h4>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="p-3 border rounded h-100">
+                                <h5>Ayushman Bharat</h5>
+                                <p>Health insurance coverage of ₹5 lakh per family per year for secondary and tertiary care hospitalization.</p>
+                                <a href="https://pmjay.gov.in/" class="btn btn-sm btn-outline-primary">Check Eligibility</a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="p-3 border rounded h-100">
+                                <h5>National Health Mission</h5>
+                                <p>Strengthening healthcare systems across all states and union territories.</p>
+                                <a href="https://nhm.gov.in/" class="btn btn-sm btn-outline-primary">View Programs</a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="p-3 border rounded h-100">
+                                <h5>PM National Dialysis Programme</h5>
+                                <p>Providing free dialysis services to the poor across all districts.</p>
+                                <a href="https://www.nhp.gov.in/pm-national-dialysis-programme_pg" class="btn btn-sm btn-outline-primary">Find Centers</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resources and Information -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-7">
+                <div class="dashboard-card p-4">
+                    <h4 class="section-title">Government Health Resources</h4>
+                    <div class="resource-list">
+                        <a href="https://www.mohfw.gov.in/" class="resource-link" target="_blank">
+                            <i class="fas fa-file-medical me-3 text-primary"></i>
+                            <div>
+                                <h6 class="mb-0">Ministry of Health Website</h6>
+                                <small class="text-muted">Official website for health advisories and updates</small>
+                            </div>
+                        </a>
+                        <a href="https://www.cowin.gov.in/" class="resource-link" target="_blank">
+                            <i class="fas fa-clipboard-list me-3 text-primary"></i>
+                            <div>
+                                <h6 class="mb-0">CoWIN Portal</h6>
+                                <small class="text-muted">COVID-19 vaccination registration and certificate download</small>
+                            </div>
+                        </a>
+                        <a href="https://abdm.gov.in/" class="resource-link" target="_blank">
+                            <i class="fas fa-id-card me-3 text-primary"></i>
+                            <div>
+                                <h6 class="mb-0">Ayushman Bharat Digital Mission</h6>
+                                <small class="text-muted">Create your digital health ID and access health records</small>
+                            </div>
+                        </a>
+                        <a href="https://nhm.gov.in/" class="resource-link" target="_blank">
+                            <i class="fas fa-map-marked-alt me-3 text-primary"></i>
+                            <div>
+                                <h6 class="mb-0">National Health Mission</h6>
+                                <small class="text-muted">Find health programs and facilities near you</small>
+                            </div>
+                        </a>
+                        <a href="https://www.icmr.gov.in/" class="resource-link" target="_blank">
+                            <i class="fas fa-flask me-3 text-primary"></i>
+                            <div>
+                                <h6 class="mb-0">ICMR Guidelines</h6>
+                                <small class="text-muted">Latest testing and treatment protocols</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="health-tips">
+                    <h4 class="section-title">Government Health Advisories</h4>
+                    <div class="d-flex mb-3">
+                        <div class="me-3">
+                            <i class="fas fa-hand-sparkles fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <h6>Swachh Bharat Guidelines</h6>
+                            <p class="small mb-0">Practice hand hygiene to prevent spread of infections as per government guidelines</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="me-3">
+                            <i class="fas fa-head-side-mask fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <h6>Mask Advisory</h6>
+                            <p class="small mb-0">MoHFW recommends masks in crowded places and hospitals</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="me-3">
+                            <i class="fas fa-syringe fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <h6>Vaccination Drive</h6>
+                            <p class="small mb-0">Get vaccinated as per the national vaccination guidelines</p>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="fas fa-apple-alt fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <h6>Eat Right India</h6>
+                            <p class="small mb-0">Follow FSSAI guidelines for nutritious food and better immunity</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card mt-4 p-4">
+                    <h4 class="section-title">Official Government Apps</h4>
+                    <div class="d-grid gap-2">
+                        <a href="https://www.aarogyasetu.gov.in/" class="btn btn-outline-primary btn-sm">
+                            <i class="fab fa-android me-2"></i> Download Aarogya Setu
+                        </a>
+                        <a href="https://web.umang.gov.in/landing/" class="btn btn-outline-primary btn-sm">
+                            <i class="fab fa-android me-2"></i> Download Umang App
+                        </a>
+                        <a href="https://abdm.gov.in/abha" class="btn btn-outline-primary btn-sm">
+                            <i class="fab fa-android me-2"></i> Download ABHA Health App
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5>India Health Dashboard</h5>
+                    <p>Providing accurate health information from Government of India sources to communities across India.</p>
+                    <div class="mt-3">
+                        <span class="text-white">Official Government Portal</span>
+                    </div>
+                </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="https://www.india.gov.in/" class="text-white text-decoration-none">National Portal</a></li>
+                        <li><a href="https://www.mohfw.gov.in/" class="text-white text-decoration-none">MoHFW</a></li>
+                        <li><a href="https://www.mygov.in/" class="text-white text-decoration-none">MyGov</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5>Resources</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="https://www.who.int/india" class="text-white text-decoration-none">WHO India</a></li>
+                        <li><a href="https://ncdc.gov.in/" class="text-white text-decoration-none">NCDC</a></li>
+                        <li><a href="https://www.icmr.gov.in/" class="text-white text-decoration-none">ICMR</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Contact</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-envelope me-2"></i> info@healthdashboard.gov.in</li>
+                        <li><i class="fas fa-phone me-2"></i> 104 (Health Helpline)</li>
+                        <li><i class="fas fa-phone me-2"></i> 1075 (COVID Helpline)</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4 bg-light">
+            <div class="text-center">
+                <p class="mb-0">© 2023 India Health Dashboard. Data sourced from Government of India.</p>
+                <p class="mb-0">This is an official website of the Ministry of Health and Family Welfare</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vaccination Chart
+            const vaccineCtx = document.getElementById('vaccinationChart').getContext('2d');
+            const vaccineChart = new Chart(vaccineCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Maharashtra', 'Uttar Pradesh', 'Kerala', 'Delhi', 'West Bengal', 'Tamil Nadu'],
+                    datasets: [{
+                        label: 'Fully Vaccinated (%)',
+                        data: [78, 72, 85, 92, 69, 81],
+                        backgroundColor: 'rgba(52, 168, 83, 0.7)',
+                        borderColor: 'rgba(52, 168, 83, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'At Least One Dose (%)',
+                        data: [89, 84, 93, 97, 82, 90],
+                        backgroundColor: 'rgba(26, 115, 232, 0.7)',
+                        borderColor: 'rgba(26, 115, 232, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Vaccination Coverage by State'
+                        }
+                    }
+                }
+            });
+
+            // Disease Distribution Chart
+            const diseaseCtx = document.getElementById('diseaseChart').getContext('2d');
+            const diseaseChart = new Chart(diseaseCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['COVID-19', 'Dengue', 'Malaria', 'Tuberculosis', 'Other'],
+                    datasets: [{
+                        data: [35, 20, 15, 18, 12],
+                        backgroundColor: [
+                            'rgba(242, 92, 84, 0.8)',
+                            'rgba(255, 159, 64, 0.8)',
+                            'rgba(255, 205, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(54, 162, 235, 0.8)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+
+            // State selector functionality
+            document.getElementById('stateSelector').addEventListener('change', function() {
+                const state = this.value;
+                updateStateData(state);
+            });
+
+            // Function to update data based on selected state
+            function updateStateData(state) {
+                // In a real implementation, this would fetch data from government APIs
+                // For demonstration, we'll use static data
+                
+                const stateData = {
+                    'national': {
+                        vaccination: '2.18B',
+                        vaccinationGrowth: '12.5%',
+                        healthCenters: '157K',
+                        newCenters: '1,240',
+                        covidCases: '24.8K',
+                        covidGrowth: '2.1%',
+                        healthWorkers: '1.2M',
+                        trainedWorkers: '15,000',
+                        alert: 'Heatwave alert issued for North India. Stay hydrated and avoid direct sun exposure during peak hours.'
+                    },
+                    'MH': {
+                        vaccination: '18.7Cr',
+                        vaccinationGrowth: '8.2%',
+                        healthCenters: '21,450',
+                        newCenters: '210',
+                        covidCases: '1,248',
+                        covidGrowth: '3.4%',
+                        healthWorkers: '185K',
+                        trainedWorkers: '2,100',
+                        alert: 'Monsoon alert for coastal Maharashtra. Take precautions against water-borne diseases.'
+                    },
+                    'UP': {
+                        vaccination: '32.5Cr',
+                        vaccinationGrowth: '10.1%',
+                        healthCenters: '31,780',
+                        newCenters: '380',
+                        covidCases: '2,145',
+                        covidGrowth: '1.8%',
+                        healthWorkers: '275K',
+                        trainedWorkers: '3,450',
+                        alert: 'Dengue prevention drive launched across Uttar Pradesh. Eliminate stagnant water sources.'
+                    },
+                    'KL': {
+                        vaccination: '5.8Cr',
+                        vaccinationGrowth: '15.3%',
+                        healthCenters: '8,450',
+                        newCenters: '95',
+                        covidCases: '845',
+                        covidGrowth: '0.9%',
+                        healthWorkers: '98K',
+                        trainedWorkers: '1,210',
+                        alert: 'Nipah virus vigilance continues in Kozhikode district. Report any symptoms immediately.'
+                    },
+                    'DL': {
+                        vaccination: '3.2Cr',
+                        vaccinationGrowth: '5.7%',
+                        healthCenters: '1,850',
+                        newCenters: '35',
+                        covidCases: '425',
+                        covidGrowth: '2.5%',
+                        healthWorkers: '45K',
+                        trainedWorkers: '520',
+                        alert: 'Air quality advisory for Delhi. People with respiratory issues advised to limit outdoor activities.'
+                    }
+                };
+
+                const data = stateData[state];
+                
+                // Update the dashboard with state-specific data
+                document.getElementById('vaccinationCount').textContent = data.vaccination;
+                document.getElementById('vaccinationGrowth').textContent = data.vaccinationGrowth;
+                document.getElementById('healthCenters').textContent = data.healthCenters;
+                document.getElementById('newCenters').textContent = data.newCenters;
+                document.getElementById('covidCases').textContent = data.covidCases;
+                document.getElementById('covidGrowth').textContent = data.covidGrowth;
+                document.getElementById('healthWorkers').textContent = data.healthWorkers;
+                document.getElementById('trainedWorkers').textContent = data.trainedWorkers;
+                document.getElementById('governmentAlert').textContent = data.alert;
+                
+                // Update charts with state-specific data
+                if (state !== 'national') {
+                    vaccineChart.data.datasets[0].data = [
+                        Math.floor(Math.random() * 20) + 75,
+                        Math.floor(Math.random() * 20) + 70,
+                        Math.floor(Math.random() * 15) + 80,
+                        Math.floor(Math.random() * 10) + 85,
+                        Math.floor(Math.random() * 20) + 65,
+                        Math.floor(Math.random() * 15) + 75
+                    ];
+                    vaccineChart.data.datasets[1].data = [
+                        Math.floor(Math.random() * 15) + 80,
+                        Math.floor(Math.random() * 15) + 75,
+                        Math.floor(Math.random() * 10) + 85,
+                        Math.floor(Math.random() * 5) + 90,
+                        Math.floor(Math.random() * 15) + 70,
+                        Math.floor(Math.random() * 10) + 80
+                    ];
+                    vaccineChart.update();
+                } else {
+                    // Reset to national data
+                    vaccineChart.data.datasets[0].data = [78, 72, 85, 92, 69, 81];
+                    vaccineChart.data.datasets[1].data = [89, 84, 93, 97, 82, 90];
+                    vaccineChart.update();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
